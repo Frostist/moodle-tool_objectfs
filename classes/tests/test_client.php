@@ -16,14 +16,37 @@
 
 namespace tool_objectfs\tests;
 
+use coding_exception;
 use tool_objectfs\local\store\object_client_base;
 
+/**
+ * Test client for PHP unit tests
+ *
+ * @package   tool_objectfs
+ * @copyright Catalyst IT
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class test_client extends object_client_base {
-    /** @var int $maxupload Maximum allowed file size that can be uploaded. */
+    /**
+     * Maximum allowed file size that can be uploaded
+     * @var int
+     */
     protected $maxupload;
 
+    /**
+     * @var string
+     */
     private $bucketpath;
 
+    /**
+     * @var array in-memory tags used for unit tests
+     */
+    public $tags;
+
+    /**
+     * string
+     * @param \stdClass $config
+     */
     public function __construct($config) {
         global $CFG;
         $this->maxupload = 5000000000;
@@ -40,33 +63,73 @@ class test_client extends object_client_base {
         }
     }
 
+    /**
+     * get_seekable_stream_context
+     * @return resource
+     */
     public function get_seekable_stream_context() {
         $context = stream_context_create();
         return $context;
     }
 
+    /**
+     * get_fullpath_from_hash
+     * @param string $contenthash
+     *
+     * @return string
+     */
     public function get_fullpath_from_hash($contenthash) {
         return "$this->bucketpath/{$contenthash}";
     }
 
 
+    /**
+     * delete_file
+     * @param string $fullpath
+     *
+     * @return bool
+     */
     public function delete_file($fullpath) {
         return unlink($fullpath);
     }
 
+    /**
+     * rename_file
+     * @param string $currentpath
+     * @param string $destinationpath
+     *
+     * @return bool
+     */
     public function rename_file($currentpath, $destinationpath) {
         return rename($currentpath, $destinationpath);
     }
 
+    /**
+     * register_stream_wrapper
+     * @return bool
+     */
     public function register_stream_wrapper() {
         return true;
     }
 
+    /**
+     * get_md5_from_hash
+     * @param mixed $contenthash
+     *
+     * @return string
+     */
     private function get_md5_from_hash($contenthash) {
         $path = $this->get_fullpath_from_hash($contenthash);
         return md5_file($path);
     }
 
+    /**
+     * verify_object
+     * @param string $contenthash
+     * @param string $localpath
+     *
+     * @return bool
+     */
     public function verify_object($contenthash, $localpath) {
         // For objects uploaded to S3 storage using the multipart upload, the etag will not be the objects MD5.
         // So we can't compare here to verify the object.
@@ -78,16 +141,70 @@ class test_client extends object_client_base {
         return false;
     }
 
+    /**
+     * test_connection
+     * @return \stdClass
+     */
     public function test_connection() {
         return (object)['success' => true, 'details' => ''];
     }
 
+    /**
+     * test_permissions
+     * @param mixed $testdelete
+     *
+     * @return \stdClass
+     */
     public function test_permissions($testdelete) {
         return (object)['success' => true, 'details' => ''];
     }
 
+    /**
+     * test_permissions
+     * @return int
+     */
     public function get_maximum_upload_size() {
         return $this->maxupload;
+    }
+
+    /**
+     * Returns test expiry time.
+     * @return int
+     */
+    public function get_token_expiry_time(): int {
+        global $CFG;
+        return $CFG->objectfs_phpunit_token_expiry_time;
+    }
+
+    /**
+     * Sets object tags - uses in-memory store for unit tests
+     * @param string $contenthash
+     * @param array $tags
+     */
+    public function set_object_tags(string $contenthash, array $tags) {
+        global $CFG;
+        if (!empty($CFG->phpunit_objectfs_simulate_tag_set_error)) {
+            throw new coding_exception("Simulated tag set error");
+        }
+        $this->tags[$contenthash] = $tags;
+    }
+
+    /**
+     * Gets object tags - uses in-memory store for unit tests
+     * @param string $contenthash
+     * @return array
+     */
+    public function get_object_tags(string $contenthash): array {
+        return $this->tags[$contenthash] ?? [];
+    }
+
+    /**
+     * Object tagging support, for unit testing
+     * @return bool
+     */
+    public function supports_object_tagging(): bool {
+        global $CFG;
+        return $CFG->phpunit_objectfs_supports_object_tagging;
     }
 }
 

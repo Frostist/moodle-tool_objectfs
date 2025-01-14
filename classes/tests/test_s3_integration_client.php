@@ -18,16 +18,36 @@ namespace tool_objectfs\tests;
 
 use tool_objectfs\local\store\s3\client;
 
+/**
+ * Client used for integration testing aws client
+ *
+ * @package   tool_objectfs
+ * @copyright Catalyst IT
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class test_s3_integration_client extends client {
 
+    /**
+     * @var string
+     */
     private $runidentifier;
 
+    /**
+     * construct
+     * @param \stdClass $config
+     */
     public function __construct($config) {
         parent::__construct($config);
         $time = microtime();
         $this->runidentifier = md5($time);
     }
 
+    /**
+     * get_filepath_from_hash
+     * @param string $contenthash
+     *
+     * @return string
+     */
     protected function get_filepath_from_hash($contenthash) {
         $l1 = $contenthash[0] . $contenthash[1];
         $l2 = $contenthash[2] . $contenthash[3];

@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_objectfs\local\object_manipulator\candidates;
+
+use dml_exception;
+
 /**
  * Interface manipulator_candidates
  * @package tool_objectfs
@@ -21,11 +25,6 @@
  * @copyright Catalyst IT
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-namespace tool_objectfs\local\object_manipulator\candidates;
-
-use dml_exception;
-
 interface manipulator_candidates {
 
     /**
@@ -50,6 +49,7 @@ interface manipulator_candidates {
     public function get_candidates_sql_params();
 
     /**
+     * get
      * @return array
      * @throws dml_exception
      */

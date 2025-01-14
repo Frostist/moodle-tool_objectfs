@@ -20,6 +20,9 @@ namespace tool_objectfs\local;
  * End to end tests for tasks. Make sure all the plumbing is ok.
  *
  * @covers \tool_objectfs\local\manager
+ * @package   tool_objectfs
+ * @copyright Catalyst IT
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tasks_test extends \tool_objectfs\tests\testcase {
 
@@ -30,13 +33,6 @@ class tasks_test extends \tool_objectfs\tests\testcase {
 
     protected function tearDown(): void {
         ob_end_clean();
-    }
-
-    public function test_run_legacy_cron() {
-        $config = manager::get_objectfs_config();
-        $config->enabletasks = true;
-        manager::set_objectfs_config($config);
-        $this->assertTrue(tool_objectfs_cron());
     }
 
     public function test_run_scheduled_tasks() {

@@ -23,6 +23,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+/**
+ * xmldb_tool_objectfs_upgrade
+ * @param int $oldversion
+ *
+ * @return bool
+ */
 function xmldb_tool_objectfs_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();
@@ -45,7 +51,7 @@ function xmldb_tool_objectfs_upgrade($oldversion) {
 
     if ($oldversion < 2017031000) {
         $table = new xmldb_table('tool_objectfs_objects');
-        $key = new xmldb_key('contenthash', XMLDB_KEY_UNIQUE, array('contenthash'));
+        $key = new xmldb_key('contenthash', XMLDB_KEY_UNIQUE, ['contenthash']);
         $dbman->add_key($table, $key);
 
         upgrade_plugin_savepoint(true, 2017031000, 'tool', 'objectfs');
@@ -105,7 +111,7 @@ function xmldb_tool_objectfs_upgrade($oldversion) {
         $table = new xmldb_table('tool_objectfs_reports');
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
         $table->add_field('reportdate', XMLDB_TYPE_INTEGER, 10, null, XMLDB_NOTNULL);
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_index('reportdate_idx', XMLDB_INDEX_NOTUNIQUE, ['reportdate']);
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
@@ -118,7 +124,7 @@ function xmldb_tool_objectfs_upgrade($oldversion) {
         $table->add_field('datakey', XMLDB_TYPE_CHAR, 15, null, XMLDB_NOTNULL);
         $table->add_field('objectcount', XMLDB_TYPE_INTEGER, 15, null, XMLDB_NOTNULL);
         $table->add_field('objectsum', XMLDB_TYPE_INTEGER, 20, null, XMLDB_NOTNULL);
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
         $table->add_index('reporttype_idx', XMLDB_INDEX_NOTUNIQUE, ['reporttype']);
         $table->add_index('reportid_idx', XMLDB_INDEX_NOTUNIQUE, ['reportid']);
         if (!$dbman->table_exists($table)) {
@@ -164,5 +170,58 @@ function xmldb_tool_objectfs_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2023013100, 'tool', 'objectfs');
     }
+
+    if ($oldversion < 2024110801) {
+
+        // Define table tool_objectfs_object_tags to be created.
+        $table = new xmldb_table('tool_objectfs_object_tags');
+
+        // Adding fields to table tool_objectfs_object_tags.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('objectid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('tagkey', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('tagvalue', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table tool_objectfs_object_tags.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Adding indexes to table tool_objectfs_object_tags.
+        $table->add_index('objecttagkey_idx', XMLDB_INDEX_UNIQUE, ['objectid', 'tagkey']);
+
+        // Conditionally launch create table for tool_objectfs_object_tags.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define field tagsyncstatus to be added to tool_objectfs_objects.
+        $table = new xmldb_table('tool_objectfs_objects');
+        $field = new xmldb_field('tagsyncstatus', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'filesize');
+
+        // Conditionally launch add field tagsyncstatus.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Changing precision of field datakey on table tool_objectfs_report_data,
+        // to (255) to allow for tag key + value pairs to fit in.
+        $table = new xmldb_table('tool_objectfs_report_data');
+        $field = new xmldb_field('datakey', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'reporttype');
+
+        // Launch change of precision for field datakey.
+        $dbman->change_field_precision($table, $field);
+
+        // Define field tagslastpushed to be added to tool_objectfs_objects.
+        $table = new xmldb_table('tool_objectfs_objects');
+        $field = new xmldb_field('tagslastpushed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0, 'tagsyncstatus');
+
+        // Conditionally launch add field tagslastpushed.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Objectfs savepoint reached.
+        upgrade_plugin_savepoint(true, 2024110801, 'tool', 'objectfs');
+    }
+
     return true;
 }

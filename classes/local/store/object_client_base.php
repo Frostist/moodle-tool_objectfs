@@ -25,12 +25,28 @@
 
 namespace tool_objectfs\local\store;
 
+use stdClass;
+
+/**
+ * [Description object_client_base]
+ */
 abstract class object_client_base implements object_client {
 
+    /**
+     * @var string
+     */
     protected $autoloader;
+    /**
+     * @var mixed
+     */
     protected $expirationtime;
-    protected $testdelete = true;
+    /**
+     * @var int
+     */
     public $presignedminfilesize;
+    /**
+     * @var mixed
+     */
     public $enablepresignedurls;
 
     /** @var int $maxupload Maximum allowed file size that can be uploaded. */
@@ -39,6 +55,19 @@ abstract class object_client_base implements object_client {
     /** @var object $config Client config. */
     protected $config;
 
+    /**
+     * If deletion should be tested.
+     * Only tested when the deleteexternal setting is not set to 'no'
+     * @return bool
+     */
+    public function should_test_delete(): bool {
+        return !empty($this->config) && $this->config->deleteexternal != TOOL_OBJECTFS_DELETE_EXTERNAL_NO;
+    }
+
+    /**
+     * construct
+     * @param \stdClass $config
+     */
     public function __construct($config) {
 
     }
@@ -56,6 +85,10 @@ abstract class object_client_base implements object_client {
         }
     }
 
+    /**
+     * register_stream_wrapper
+     * @return void
+     */
     public function register_stream_wrapper() {
 
     }
@@ -77,7 +110,7 @@ abstract class object_client_base implements object_client {
      *
      * @throws \coding_exception
      */
-    public function generate_presigned_url($contenthash, $headers = array()) {
+    public function generate_presigned_url($contenthash, $headers = []) {
         throw new \coding_exception("Pre-signed URLs not supported");
     }
 
@@ -94,7 +127,7 @@ abstract class object_client_base implements object_client {
         if ($connection->success) {
             $output .= $OUTPUT->notification(get_string('settings:connectionsuccess', 'tool_objectfs'), 'notifysuccess');
             // Check permissions if we can connect.
-            $permissions = $this->test_permissions($this->testdelete);
+            $permissions = $this->test_permissions($this->should_test_delete());
             if ($permissions->success) {
                 $output .= $OUTPUT->notification(key($permissions->messages), 'notifysuccess');
             } else {
@@ -160,5 +193,48 @@ abstract class object_client_base implements object_client {
      */
     public function test_permissions($testdelete) {
         return (object)['success' => false, 'details' => ''];
+    }
+
+    /**
+     * Return expiry time of token, default is -1 meaning not implemented/enabled.
+     * @return int
+     */
+    public function get_token_expiry_time(): int {
+        // Returning -1 = not implemented.
+        return -1;
+    }
+
+    /**
+     * Tests setting an objects tag.
+     * @return stdClass containing 'success' and 'details' properties
+     */
+    public function test_set_object_tag(): stdClass {
+        return (object)['success' => false, 'details' => ''];
+    }
+
+    /**
+     * Set the given objects tags in the external store.
+     * @param string $contenthash file content hash
+     * @param array $tags array of key=>value pairs to set as tags.
+     */
+    public function set_object_tags(string $contenthash, array $tags) {
+        return [];
+    }
+
+    /**
+     * Returns given objects tags queried from the external store. External object must exist.
+     * @param string $contenthash file content has
+     * @return array array of key=>value tag pairs
+     */
+    public function get_object_tags(string $contenthash): array {
+        return [];
+    }
+
+    /**
+     * If the client supports object tagging feature.
+     * @return bool true if supports, else false
+     */
+    public function supports_object_tagging(): bool {
+        return false;
     }
 }

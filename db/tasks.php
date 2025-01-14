@@ -25,87 +25,99 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$tasks = array(
-    array(
+$tasks = [
+    [
         'classname' => 'tool_objectfs\task\push_objects_to_storage',
         'blocking'  => 0,
         'minute'    => '*',
         'hour'      => '*',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-    array(
+        'month'     => '*',
+    ],
+    [
         'classname' => 'tool_objectfs\task\generate_status_report',
         'blocking'  => 0,
         'minute'    => '17',
         'hour'     => '*',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-    array(
+        'month'     => '*',
+    ],
+    [
         'classname' => 'tool_objectfs\task\delete_local_objects',
         'blocking'  => 0,
         'minute'    => '*',
         'hour'      => '*',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-    array(
+        'month'     => '*',
+    ],
+    [
         'classname' => 'tool_objectfs\task\orphan_objects',
         'blocking'  => 0,
         'minute'    => 'R',
         'hour'      => 'R',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-    array(
+        'month'     => '*',
+    ],
+    [
         'classname' => 'tool_objectfs\task\delete_orphaned_object_metadata',
         'blocking'  => 0,
         'minute'    => 'R',
         'hour'      => 'R',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-    array(
+        'month'     => '*',
+    ],
+    [
         'classname' => 'tool_objectfs\task\delete_local_empty_directories',
         'blocking'  => 0,
         'minute'    => '0',
         'hour'      => '1',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-    array(
+        'month'     => '*',
+    ],
+    [
         'classname' => 'tool_objectfs\task\pull_objects_from_storage',
         'blocking'  => 0,
         'minute'    => '*',
         'hour'      => '*',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-    array(
+        'month'     => '*',
+    ],
+    [
         'classname' => 'tool_objectfs\task\recover_error_objects',
         'blocking'  => 0,
         'minute'    => '34',
         'hour'      => '*/12',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-    array(
+        'month'     => '*',
+    ],
+    [
         'classname' => 'tool_objectfs\task\check_objects_location',
         'blocking'  => 0,
         'minute'    => 'R',
         'hour'      => '*',
         'day'       => '*',
         'dayofweek' => '*',
-        'month'     => '*'
-    ),
-);
+        'month'     => '*',
+    ],
+    [
+        'classname' => 'tool_objectfs\task\trigger_update_object_tags',
+        'blocking'  => 0,
+        'minute'    => 'R',
+        'hour'      => '*',
+        'day'       => '*',
+        'dayofweek' => '*',
+        'month'     => '*',
+        // Default disabled - intended to be manually run.
+        // Also, objectfs tagging support is default off.
+        'disabled' => true,
+    ],
+];
 

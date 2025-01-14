@@ -24,6 +24,7 @@
  */
 
 use tool_objectfs\local\object_manipulator\manipulator_builder;
+use tool_objectfs\local\tag\tag_manager;
 
 define('OBJECTFS_PLUGIN_NAME', 'tool_objectfs');
 
@@ -69,26 +70,10 @@ define('TOOL_OBJECTFS_DELETE_EXTERNAL_NO', 0);
 define('TOOL_OBJECTFS_DELETE_EXTERNAL_TRASH', 1);
 define('TOOL_OBJECTFS_DELETE_EXTERNAL_FULL', 2);
 
-// Legacy cron function.
-function tool_objectfs_cron() {
-    mtrace('RUNNING legacy cron objectfs');
-    global $CFG;
-    if ($CFG->branch <= 26) {
-        // Unlike the task system, we do not get fine grained control over
-        // when tasks/manipulators run. Every cron we just run all the manipulators.
-        (new manipulator_builder())->execute_all();
-
-        \tool_objectfs\local\report\objectfs_report::cleanup_reports();
-        \tool_objectfs\local\report\objectfs_report::generate_status_report();
-    }
-
-    return true;
-}
-
 /**
  * Sends a plugin file to the browser.
- * @param $course
- * @param $cm
+ * @param mixed $course
+ * @param mixed $cm
  * @param \context $context
  * @param string $filearea
  * @param array $args
@@ -117,11 +102,16 @@ function tool_objectfs_pluginfile($course, $cm, context $context, $filearea, arr
  * @return array
  */
 function tool_objectfs_status_checks() {
+    $checks = [
+        new tool_objectfs\check\token_expiry(),
+        new tool_objectfs\check\tagging_status(),
+        new tool_objectfs\check\tagging_sync_status(),
+        new tool_objectfs\check\tagging_migration_status(),
+    ];
+
     if (get_config('tool_objectfs', 'proxyrangerequests')) {
-        return [
-            new tool_objectfs\check\proxy_range_request()
-        ];
+        $checks[] = new tool_objectfs\check\proxy_range_request();
     }
 
-    return [];
+    return $checks;
 }

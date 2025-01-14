@@ -30,6 +30,10 @@ use stdClass;
 use tool_objectfs\local\store\azure\stream_wrapper;
 use tool_objectfs\local\store\object_client_base;
 
+/**
+ * client
+ * @deprecated Since Moodle 4.2 - Please see the README about updating to new azure_blob_storage client.
+ */
 class client extends object_client_base {
 
     /** @var BlobRestProxy $client The Blob client. */
@@ -41,7 +45,7 @@ class client extends object_client_base {
     /**
      * The azure client constructor.
      *
-     * @param $config
+     * @param \stdclass $config
      */
     public function __construct($config) {
         global $CFG;
@@ -141,19 +145,23 @@ class client extends object_client_base {
         return $relativepath;
     }
 
+    /**
+     * get_seekable_stream_context
+     * @return resource
+     */
     public function get_seekable_stream_context() {
-        $context = stream_context_create(array(
-            'blob' => array(
-                'seekable' => true
-            )
-        ));
+        $context = stream_context_create([
+            'blob' => [
+                'seekable' => true,
+            ],
+        ]);
         return $context;
     }
 
     /**
      * Trim a leading '?' character from the sas token.
      *
-     * @param $sastoken
+     * @param string $sastoken
      * @return bool|string
      */
     private function clean_sastoken($sastoken) {
@@ -164,6 +172,12 @@ class client extends object_client_base {
         return $sastoken;
     }
 
+    /**
+     * get_md5_from_hash
+     * @param string $contenthash
+     *
+     * @return string
+     */
     private function get_md5_from_hash($contenthash) {
         try {
             $key = $this->get_filepath_from_hash($contenthash);
@@ -185,6 +199,13 @@ class client extends object_client_base {
         return $md5;
     }
 
+    /**
+     * verify_objectverify_object
+     * @param string $contenthash
+     * @param string $localpath
+     *
+     * @return bool
+     */
     public function verify_object($contenthash, $localpath) {
         // For objects uploaded to S3 storage using the multipart upload, the etag will not be the objects MD5.
         // So we can't compare here to verify the object.
@@ -196,12 +217,22 @@ class client extends object_client_base {
         return false;
     }
 
+    /**
+     * get_filepath_from_hash
+     * @param string $contenthash
+     *
+     * @return string
+     */
     protected function get_filepath_from_hash($contenthash) {
         $l1 = $contenthash[0] . $contenthash[1];
         $l2 = $contenthash[2] . $contenthash[3];
         return "$l1/$l2/$contenthash";
     }
 
+    /**
+     * test_connection
+     * @return stdClass
+     */
     public function test_connection() {
         $connection = new \stdClass();
         $connection->success = true;
@@ -220,10 +251,16 @@ class client extends object_client_base {
         return $connection;
     }
 
+    /**
+     * test_permissions
+     * @param mixed $testdelete
+     *
+     * @return stdClass
+     */
     public function test_permissions($testdelete) {
         $permissions = new \stdClass();
         $permissions->success = true;
-        $permissions->messages = array();
+        $permissions->messages = [];
 
         try {
             $result = $this->client->createBlockBlob($this->container, 'permissions_check_file', 'permissions_check_file');
@@ -268,6 +305,12 @@ class client extends object_client_base {
         return $permissions;
     }
 
+    /**
+     * get_exception_details
+     * @param \MicrosoftAzure\Storage\Common\Exceptions\ServiceException $exception
+     *
+     * @return string
+     */
     protected function get_exception_details(\MicrosoftAzure\Storage\Common\Exceptions\ServiceException $exception) {
         $message = $exception->getErrorMessage();
 
@@ -298,7 +341,7 @@ class client extends object_client_base {
      * Shared Access Signature.
      *
      * @param admin_settingpage $settings
-     * @param $config
+     * @param  \stdClass $config
      * @return admin_settingpage
      */
     public function define_client_section($settings, $config) {
@@ -319,6 +362,30 @@ class client extends object_client_base {
             new \lang_string('settings:azure:sastoken_help', 'tool_objectfs'), ''));
 
         return $settings;
+    }
+
+    /**
+     * Returns token expiry time
+     * @return int
+     */
+    public function get_token_expiry_time(): int {
+        if (empty($this->config->azure_sastoken)) {
+            return -1;
+        }
+
+        // Parse the sas token (it just uses url parameter encoding).
+        $parts = [];
+        parse_str($this->config->azure_sastoken, $parts);
+
+        // Get the 'se' part (signed expiry).
+        if (!isset($parts['se'])) {
+            // Assume expired (malformed).
+            return 0;
+        }
+
+        // Parse timestamp string into unix timestamp int.
+        $expirystr = $parts['se'];
+        return strtotime($expirystr);
     }
 
     /**

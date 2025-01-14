@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace tool_objectfs\local\object_manipulator;
+
+use stdClass;
+
 /**
  * Object manipulator interface class.
  *
@@ -22,21 +26,18 @@
  * @copyright Catalyst IT
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-namespace tool_objectfs\local\object_manipulator;
-
-use stdClass;
-
 interface object_manipulator {
 
 
     /**
+     * execute
      * @param array $objects
      * @return mixed
      */
     public function execute(array $objects);
 
     /**
+     * manipulate_object
      * @param stdClass $objectrecord
      * @return int
      */

@@ -35,6 +35,9 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/admin/tool/objectfs/lib.php');
 
+/**
+ * manipulator
+ */
 abstract class manipulator implements object_manipulator {
 
     /**
@@ -82,6 +85,7 @@ abstract class manipulator implements object_manipulator {
     }
 
     /**
+     * execute
      * @param array $objectrecords
      * @return mixed|void
      * @throws dml_exception
@@ -107,7 +111,7 @@ abstract class manipulator implements object_manipulator {
 
             $newlocation = $this->manipulate_object($objectrecord);
             if (!empty($objectrecord->id)) {
-                manager::update_object($objectrecord, $newlocation);
+                manager::upsert_object($objectrecord, $newlocation);
             } else {
                 manager::update_object_by_hash($objectrecord->contenthash, $newlocation);
             }
